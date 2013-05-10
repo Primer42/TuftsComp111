@@ -1,0 +1,202 @@
+
+<html>
+<body>
+<h3> Comp111 Assignment 4: ants and aardvarks</h3> 
+
+<h3> Overview</h3>
+
+<p> One of the most famous problems in concurrency is that of the "Dining Philosophers", who must share knives and forks in a concurrent manner. But this has been studied too much in the literature, so instead,  we will study the "Dining Aardvarks". 
+
+<p> There are 11 aardvarks and 4 anthills. There are 20 ants in each anthill. 
+Only 3 aardvarks can share one anthill at a time. It takes one second of 
+real time for an aardvark to slurp up an ant, and another second for the
+aardvark to swallow it, during which time it is not using the anthill
+and another aardvark can start slurping.  However, should an aardvark 
+attempt to slurp an ant from an anthill where 3 aardvarks are already 
+slurping, or make any other kind of mistake, including attempting to slurp 
+from an already empty anthill or an 
+anthill that doesn't exist, it will be <em>4 seconds</em> before the aardvark is available to slurp again. The simulator calls that 'sulking'. 
+
+<h3>Objectives</h3> 
+Your objective is to manage the aardvarks so that all of the ants are consumed in a minimal amount of real time. Each aardvark is a thread in a multi-threaded program.  You are given a simulator for the anthills that invokes the aardvarks
+and measures the resulting behavior. 
+<p> You must write 11 threads: 
+<pre> 
+extern void *thread_A(void *); 
+extern void *thread_B(void *); 
+extern void *thread_C(void *); 
+extern void *thread_D(void *); 
+extern void *thread_E(void *); 
+extern void *thread_F(void *); 
+extern void *thread_G(void *); 
+extern void *thread_H(void *); 
+extern void *thread_I(void *); 
+extern void *thread_J(void *); 
+extern void *thread_K(void *); 
+</pre> 
+that simulate the behaviors of the aardvarks, informally named "A"-"H". 
+<p>Each thread has one argument passed to it, which is the name of the 
+aardvark that it is simulating. The bare skeleton of a thread is something like: 
+<pre> 
+void *thread_A(void *input) {
+    char aname = *(char *)input; // name of aardvark, for debugging purposes
+    while (chow_time()) {  // there is an ant to eat
+	// do something 
+    }
+    return NULL;
+}
+</pre> 
+
+<p>
+Each thread may utilize the following interface, documented in 
+<code>/comp/111/a/a4/anthills.h</code> : 
+<pre> 
+#define TRUE 1
+#define FALSE 0 
+#define AARDVARKS 11
+#define ANTHILLS 4
+#define ANTS_PER_HILL 20
+#define AARDVARKS_PER_HILL 3
+extern int slurp(char aname, int anthill); // eat one ant. 
+extern int chow_time(); // whether there are ants to eat
+extern double elapsed(); // how much time has been spent? 
+</pre> 
+<ul> 
+<li> <code>slurp</code> tries to slurp up an ant. It returns in two seconds of real time if it succeeds, and <em>4 seconds of real time if it does not</em>.
+During the second second of a successful <code>slurp</code>, the hill can be slurped again. 
+<code>slurp</code> returns 1 if it succeeds (and the aardvark 
+actually consumes an ant) and 0 if it fails. 
+<li> <code>chow_time</code> returns 1 if there's an ant left anywhere, and 0 if not. Your threads should return when this returns 0. 
+<li> <code> elapsed</code> returns the seconds of real time (wallclock time) since the start of the simulation. 
+</ul> 
+A starting version of the aardvarks code may be found in 
+<code>/comp/111/a/a4/aardvarks.c</code>. 
+
+<h3>The Simulator</h3>
+You will test your <code>aardvarks.c</code> by use of a simulator, currently
+contained in <code>/comp/111/a/a4/anthills.c</code> and <code>/comp/111/a/a4/anthills.h</code>. You may not 
+modify this simulator (except to test your theories), but may use whatever information you can glean from
+the source code. During grading, <em>this simulator will be the one that is used</em>. The simulator creates your threads and waits for them to complete. It also provides mechanisms by which your threads must <code>slurp</code> the ants. 
+These mechanisms employ concurrency locks in the manner discussed in class: see the code for details. 
+
+<h3>Grading</h3> 
+Assignment 4 is worth 10 points, including 2 points style and 8 points based upon the actual performance of your program in elapsed time. Note that if your threads do not complete, your score for that part is 0. <em>You must not deadlock!</em> 
+
+<h3> Getting started</h3> 
+To get started, 
+<pre>
+mkdir a4
+cd a4; 
+cp /comp/111/a/a4/aardvarks.c .
+ln -s /comp/111/a/a4/anthills.o .
+gcc -g aardvarks.c anthills.o -lpthread -lrt 
+./a.out
+</pre> 
+This is a pretty miserable version of the aardvarks that makes grevious errors. 
+Edit <code>aardvarks.c</code> to create your solution, and use the above 
+compilation command. 
+
+<h3>Using the Simulator</h3> 
+The simulator takes several arguments that control what it prints. 
+<ul> 
+<li> <code>quiet</code>: suppress normal printing, run quietly. 
+<li> <code>debug</code>: report errors explicitly. 
+<li> <code>trace</code>: trace the whole state of the simulator. 
+<li> <code>csv</code>: create <code>output.csv</code> containing a
+machine-readable trace of the simulation. 
+</ul> 
+The last option can be utilized to visualize the aardvarks. 
+
+<h3>Visualizing the Aardvarks</h3> 
+There is a simple visualizer for the aardvarks in <code>/comp/111/a/a4/see.R</code>. This is a program in the R language for statistical analysis. 
+To use it, first run your a.out using the <code>csv</code> argument. 
+
+Then, in the same directory, on any workstation, type: 
+<pre> 
+% ln -s /comp/111/a/a4/see.R .
+% R
+> source('see.R')
+> q()
+</pre> 
+You can also run this on any windows machine, by first transferring output.csv
+to the machine. 
+<p> 
+In the visualization, the aardvarks are on Y while wallclock time is on X. 
+<ul> 
+<li> green indicates that an aardvark is slurping (the shade determines the anthill). 
+<li> yellow indicates that an aardvark is swallowing. 
+<LI> red indicates that an aardvark is sulking (after an error or concurrency violation). 
+<li> gray indicates that an aardvark is idle. 
+</ul> 
+
+<h3>Hints</h3> 
+I do not know the optimal strategy (although I 
+have some fairly good educated guesses). I will be working along with you on the 
+solution.  Some initial comments: 
+<ul> 
+<li> When an aardvark finishes slurping, it rests for a second, during which time another aardvark can -- in principle -- slurp in its stead. 
+<li> I am not going to tell you when that second is up! But you have the 
+<code>elapsed()</code> function to help.
+<li> Quite obviously, you are going to have to implement your own 
+     locking for best performance. I penalize an aardvark rather severely 
+     for trying to exceed the "slurp limit" of 3 aardvarks per hill. 
+<li> Your aardvarks can collude! You can use whatever mechanism you want 
+     to communicate between them, remembering that they are operating in 
+     a shared memory environment. But remember to use your own locking! 
+<li> You may utilize semaphores; the main consumption of time is when the 
+     aardvarks "slurp". 
+<lI> While you can engineer the locations of my simulator variables and walk on them, it will be easy to see that you're doing this in the source. Don't do that. 
+<li> It is rather important to utilize an up-to-date simulator. As the assignment progresses, I will fix bugs and perhaps implement helpful features. 
+</ul> 
+
+<h3>Some of my dirty tricks</h3> 
+Some of my dirty tricks: 
+<ul> 
+<li> Track the state of the simulator in my own global variables (protected
+    by mutexes!) 
+<li> Wrap the <code>slurp</code> routine inside my routine <code>my_slurp</code> 
+     that calls <code>slurp</code> and updates state accordingly.  Then if 
+     I only call <code>my_slurp</code>, my idea of state is always correct. 
+<li> Use that knowledge of state to avoid concurrency botches. 
+<li> My first thread initializes all of my mutexes; all the others
+     wait for it. A global variable changes when everything is initialized.
+     (Without this, havoc ensued; threads locked mutexes before they were
+     initialized!)
+</ul> 
+
+<h3> Submitting completed assignments</h3>
+<p> Your 11 threads should be in a single c program <code>aardvarks.c</code>.
+Programs in other languages are unacceptable. Your program must compile 
+with the following compilation command: 
+<pre>
+gcc -g aardvarks.c /comp/111/a/a4/anthills.o -lpthread -lrt
+</pre>
+To submit this program, first ssh to <code>comp111-01</code> or <code>-02</code>, 
+then type:
+<pre>
+provide comp111 a4 aardvarks.c
+</pre>
+where <code>aardvarks.c</code> 
+is a file containing all of your program. 
+<p> Your submission will be graded offline on one of the comp111 machines. 
+To see grading status or comments, type: 
+<pre>
+progress comp111
+</pre>
+
+<font color='red'> 
+<h3>Extra credit</h3> 
+For extra credit, solve the problem for <em>two</em> anthills. 
+You'll need all different support files. See /comp/111/a/a4/extra
+for all of the files you'll need. 
+
+<p> To submit an extra credit solution, 
+<pre> 
+provide comp111 a4extra aardvarks.c
+</pre> 
+where this <code>aardvarks.c</code> solves the problem for two anthills. 
+</font> 
+
+</body>
+</html>
+

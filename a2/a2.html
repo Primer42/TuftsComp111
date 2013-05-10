@@ -1,0 +1,81 @@
+<html>
+<body>
+<h1> Comp111 Assignment 2: processes and signals</h1> 
+
+<h1> Overview</h1>
+
+<p> You are probably used to interacting with processes via typing
+input into them and reading responses.  In this assignment, we'll have
+some fun with another way of interacting with processes:
+<em>signals</em>.  You'll write a simple program that responds to
+several signals in a variety of ways.
+
+<h1>Objectives</h1>
+
+<p> Your objective is to write a <code>C</code> program
+<code>sig.c</code> that, when invoked, waits for input from the user
+and echoes it back line-by-line (this is the default behavior).  This
+program should execute on <code>comp111.cs.tufts.edu</code>, which is a
+linux machine, and should be compiled with <code>gcc</code>.  While
+echoing inputs, your program should also listen for several signals.
+Receipt of each signal should cause a different response from the
+program.
+
+<p> 
+First, your program should schedule a <code>SIGALRM</code>
+(alarm) every ten seconds, and react to this signal by counting up
+seconds, by printing something like the following:  
+<pre> 
+tick 0...  
+tick 10...  
+tick 20...  
+</pre>
+as a running count. 
+This will serve as a "heartbeat" to let you know that your program
+has not crashed. Note: you will not be able to use <code>cout</code>, 
+because you are writing in <code>C</code>, not <code>C++</code>; 
+you must use <code>printf</code> instead. 
+
+<p> Second, the following signals should evoke behaviors as indicated: 
+<ol> 
+<li> <code>SIGINT</code> should print a summary of all time spent by the program (system and user) and then continue running the program. 
+<li> <code>SIGTERM</code> should print a summary of all time spent in the program, and additionally exit the program 
+<li> <code>SIGTSTP</code> should print the last 10 lines of user input.
+</ol> 
+
+<h1>Hints</h1> 
+<p>
+Some documentation pointers (on <code>comp111.cs.tufts.edu</code>): 
+<ul>
+<li> <code>man signal</code> - how to set up a signal handler.
+<li> <code>man sigvec</code> - another way to set up a signal handler.
+<li> <code>man sleep</code> - how to use SIGALRM to sleep for a
+     given number of seconds.
+<li> <code>comp111:/usr/include/bits/signum.h</code>: numbers of all signals. 
+</ul>
+
+<h1> Submitting completed assignments</h1>
+<p> The whole program should be in a single c program <code>sig.c</code>.
+Programs in other languages are unacceptable.
+The beginning of the file should describe how to compile the
+file, in comments. A typical compilation command might be:
+<pre>
+gcc -o sig sig.c
+</pre>
+To submit this program, first ssh to <code>comp111.cs.tufts.edu</code>,
+then type:
+<pre>
+provide comp111 a2 sig.c
+</pre>
+It will be graded offline. To see grading status or comments, type
+<pre>
+progress comp111
+</pre>
+
+<h1>Extra credit</h1> 
+For 1 point extra credit (out of 10 points total), implement the 
+above using only one signal handler routine to catch all kinds
+of signals. 
+</body>
+</html>
+

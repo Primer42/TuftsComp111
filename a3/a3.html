@@ -1,0 +1,157 @@
+
+<html>
+<body>
+<h3> Comp111 Assignment 3: sandboxing a process</h3> 
+
+<h3> Overview</h3>
+
+<p> A very common problem in process management is to manage the
+behavior of a process whose source code and behavior you cannot
+control, e.g., a student-submitted program for a programming class.  A
+systematic problem in grading student programs is that their program
+can do anything at all that the user who is running the program can
+do.  
+
+<p> One solution to this problem is to create a "sandbox" for the
+process to be graded, that keeps the process from doing things it
+should not be able to do.  Sandboxing is so important that whole
+operating systems (most recently, Google Chrome OS -- a version of
+linux not to be confused with the Chrome browser) have been written to
+provide the service.
+
+<p>In this assignment, you will write a program that executes another
+program (e.g., a program to be graded) in a controlled environment.
+When executing in this environment, the program should only do things
+that are explicitly allowed according to a predetermined policy, and
+should be killed (and a note made in a log) if the program does
+anything not allowed by the policy.  
+
+<p> Just to make this interesting, I am going to give you some behaviors to stop. I will provide several misbehaving programs and you have to keep them 
+from misbehaving. Each program will try to take over the resources of
+the whole machine and keep everyone from working. To be fair about this, 
+I am going to craft them so that a simple control-C will stop them; in 
+the worst case I can craft them so that this won't work!
+
+<h3>Objectives</h3>
+
+<p> Your objective is to write a <code>C</code> program
+<code>watch</code> that, when invoked, runs another given program and
+attempts to control behaviors of the child process. 
+The program to run should be specified in watch's first argument. 
+E.g., 
+<pre>watch a.out</pre> 
+should invoke your program <code>watch</code> to invoke and watch the execution of the child process <code>a.out</code>. 
+<code>watch</code> should 
+react to several conditions in the child
+process with preventative actions, reporting each one to <code>stderr</code>. 
+<ol> 
+<li>  If the child occupies more than 4 MB of stack memory, it should be 
+killed and this event should be reported.  The program 
+<a href="a3/1.c">1.c</a> does this. 
+<li>  If the child occupies more than 4 MB of heap memory, it should be 
+killed and this event should be reported.  The program 
+<a href="a3/2.c">2.c</a> does this.
+<li> If the child forks more than 20 times, it should be killed and the 
+event should be reported.  
+The program <a href="a3/3.c">3.c</a> does this.
+
+<li>  If the child uses more than 1 CPU-second of computer time, it should
+be killed and this event should be reported.  
+The program <a href="a3/4.c">4.c</a> does this.
+<li> If the child produces more than 100 lines of output to stdout, 
+     it should be killed and this should be reported. 
+The program <a href="a3/4.c">5.c</a> does this.
+
+</ol> 
+When the child dies, its total runtime, number of lines printed to stdout, and time of death should be reported.  
+After any of these, the <code>watch</code> program should exit. 
+A regular exit from watch should also report time spent by the child. 
+<p> 
+Part of the problem is to distinguish which behaviors can be controlled
+through the operating system itself, which ones can be controlled through
+monitoring, and which can only be controlled partially due to extenuating
+circumstances. Some of the above conditions are easy
+to assure, and <em>some are impossible to completely control.</em>
+It is part of your task to determine which ones are possible to accomplish. 
+
+<h3>Notes</h3> 
+<ol> 
+<li> You must forward everything the child prints to stdout, even if 
+     you capture it yourself. 
+<li> You cannot use privilege in any way.  All
+     processes must run as your user, not root.  
+<li> It is not permissible to rewrite the operating system!
+     I only say this because people have tried this in the past! 
+<li> It is possible to invoke the <code>gdb</code> interface and single-step 
+     the child program, but this is very difficult and not recommended. 
+     See <code>man waitid</code> and <code>man ptrace</code> for details. 
+<li> It is <em>always</em> a better solution to employ the operating
+     system to monitor the process if possible.  Read up on "resource 
+     limits" as a hint to addressing some of the requirements. 
+<li> Some child conditions can be detected via signals.  Use them if 
+     at all possible! In particular, you will want to trap SIGCHLD 
+     in the parent and react accordingly! 
+<li> Part of your program can be some form of "monitoring loop" 
+     in which the program repeatedly measures the behavior of the child. 
+<li> Feel free to redirect I/O from the child to a subthread of your watch
+     process. 
+<li> You should presume that the child can do anything, including changing
+     its behavior according to all available system calls. You cannot assume
+     that the child won't try to get around your controls via malicious means. 
+<li> In particular, note that <em>you cannot install a signal handler in the 
+     child</em>, because during an <code>exec</code>, that handler would get overwritten!
+<li> But the child is permitted to install its own signal handlers to thwart 
+     your controls, and you must be able to handle that! 
+</ol>
+
+<h3> Where to work </h3> 
+
+For this assignment, since we are going to be doing something
+"dangerous", we will work on our own machines,
+<code>comp111-01.cs.tufts.edu</code> and <code>comp111-02.cs.tufts.edu</code>.  These machines are <em>inside the
+firewall</em> and cannot be accessed directly.
+To work there, <em> ssh to <code>linux.cs.tufts.edu</code> first</em>, then to 
+<code>comp111-01.cs.tufts.edu</code> (or <code>-02</code>).  It is rather important that
+you do <em>not</em> test this program on <code>sun.eecs.tufts.edu</code>
+or <code>linux.eecs.tufts.edu</code>, especially since you will be 
+running intentionally antisocial programs!
+
+<p>If you manage to crash one of the servers, please don't try to run your
+program on the other one until you're sure that you've fixed it. I say
+this because in the past, students have managed to crash <em>both</em> servers
+from a single cause. 
+
+
+<h3> Submitting completed assignments</h3>
+<p> The whole program should be in a single c program <code>watch.c</code>.
+Programs in other languages are unacceptable.
+The beginning of the file should describe how to compile the
+file, in comments. A typical compilation command might be:
+<pre>
+gcc -g -o watch watch.c
+</pre>
+To submit this program, first ssh to <code>comp111-01</code> or <code>-02</code>, 
+then type:
+<pre>
+provide comp111 a3 watch.c 
+</pre>
+where <code>watch.c</code> 
+is a file containing your program.
+<p> Your submission will be graded offline. To see grading status 
+or comments, type: 
+<pre>
+progress comp111
+</pre>
+
+<h3>Checklist</h3> 
+Before you provide your solution for grading, please ensure the following requirements: 
+<table border='1'> 
+<tr><td><input type='checkbox' name='test'></td><td><code>watch.c</code> is a self-contained C program</td></tr> 
+<tr><td><input type='checkbox' name='test'></td><td>The method for compiling watch.c is documented in a comment at the top of the program. </td></tr> 
+<tr><td><input type='checkbox' name='test'></td><td>Your program, when compiled into the file "watch", takes one argument that is the name of a compiled child program. Typing <code>watch a.out</code> will watch whatever process results from executing <code>a.out</code>. <em>It is not acceptable to make us change your program to test each case.</em> </td></td>
+<tr><td><input type='checkbox' name='test'></td><td>At the top of your <code>watch.c</code> program, in a block comment, you have specified how you handled each condition, and whether there are cases that your solution does not catch. </td></tr> 
+</table> 
+
+</body>
+</html>
+

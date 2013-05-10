@@ -1,0 +1,75 @@
+<html><head><title>Comp111 Assignment 6</title></head><body>
+<h1> Comp111 Assignment 6<br> 
+Benchmarking <br> 
+</h1> 
+
+<h1>Overview</h1>
+
+An operating system <em>benchmark</em> is a program that determines
+the speed of some process within the operating system.  There are
+several kinds of benchmarks, depending upon what one is measuring.  In
+this assignment we will measure both the speed of disk I/O
+and the speed of cache hits.  
+
+<h1>Objective</h1> 
+
+Your objective is to write a benchmark program for disk I/O that measures the
+following attributes (if possible): 
+<ul> 
+<li> The speed with which one can read from the disk containing your home 
+     directory (it's the same for everyone). 
+<li> The speed with which one can read from disk cache. 
+<li> The speed with which one can write to the disk containing your home
+     directory. 
+<li> The speed with which one can write to disk cache. 
+</ul> 
+Note that as usual, I have been a bit slimey and one of these is exceedingly
+difficult to measure. Figuring out which one is up to you! 
+If you manage to measure it, you deserve extra credit!
+<p>
+A solution to this assignment is a program <code>a6.c</code> that
+constructs experiments and then measures them.  For each kind of
+measurement, it should create a situation to measure, do the
+measurement, and then return the results.  It should only create files
+in the current directory of the invoked process.
+<p>
+It is rather important to do your experimenting on
+Comp111.cs.tufts.edu, because you are going to be taking up a
+substantive amount of CPU time to do this. Keeping CPU time from 
+influencing your measurements is a significant part of the problem. 
+<p> 
+There is one file to help you: /comp/111/a/a6/testfile.dat: 
+<pre> 
+-rw-r--r-- 1 couch faculty 1000000000 Dec  5  2010 testfile.dat
+</pre> 
+This is a really big file that you can use to test reads. 
+
+<h1>Hints</h1> 
+
+Several hints:
+<ul> 
+<li> When you read a block from disk the first time, you read it from 
+     the disk itself. The second time, it is read from cache, so measuring
+     the speed of the cache just requires repeating the operation and 
+     ignoring the first read. 
+<li> The speed of disk I/O can only be measured if the file to be written 
+     or read is not already in cache.  Otherwise we are measuring the speed of 
+     the cache, and not the speed of the disk! Thus it becomes important to 
+     run your program on a file that is not in cache, which means in turn
+     that you must construct that file, wait for it to flush out of cache, 
+     and <em>then</em> measure how fast you can read it. 
+<li> I strongly suggest that you use raw I/O, i.e., <code>read</code> and 
+     <code>write</code> (instead of formatted I/O including <code>fprintf</code>     and <code>fscanf</code>) to read from and write to disk. Otherwise, you 
+     will see a buffering delay that is not what you should be measuring. 
+</ul> 
+
+<h1>Submitting completed assignments</h1> 
+
+To submit this assignment, if your program is "a6.c", 
+ssh to comp111 and type
+<pre> 
+provide comp111 a6 a6.c
+</pre> 
+You will see your results with the command "progress comp111". 
+
+</body></html>

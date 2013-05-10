@@ -1,0 +1,193 @@
+<html>
+<head><title>Comp111 Assignment 1</title> </head> 
+<body>
+<h3> Comp111 Assignment 1: gaming the operating system</h3> 
+
+<h3> Overview</h3>
+
+<p> In class we have discussed the nature of time in an operating system,
+including the fundamental inaccuracies in the system clock. In this 
+assignment, it is your job to <em>take advantage</em> of these inaccuracies
+to create a computation that runs "under the radar" of the operating system
+accounting mechanism. 
+
+<h3>Objectives</h3>
+
+<p> Your objective is to modify the <code>C</code> program
+<code>life.c</code> so that it seems to consume less CPU time than it
+actually does!  This program will be tested on
+<code>linux.cs.tufts.edu</code>, which is a linux machine, and
+should be compiled with <code>gcc</code>.  The program reads an input
+file and runs Conway's game of life on the input, for a specified
+number of iterations.  Thus, it is a <em>compute-bound</em> program.
+Several potential input files are included, named pat1-pat6 in the
+assignment directory. 
+<p>The code for the target program is available 
+<a href="a1/life.c">here</a>. Other files are located in <a href="a1">this directory</a>.
+
+<h3>Getting started</h3> 
+<p> 
+To get started,
+<pre> 
+mkdir Comp111
+cd Comp111
+mkdir a1
+cd a1
+cp /comp/111/assignments/a1/life.c .
+cp /comp/111/assignments/a1/pat* .
+cp life.c mylife.c
+gcc -g mylife.c -o mylife     # put runnable program into file mylife
+time ./mylife 100 &lt;pat1    # time the result of computing 100 iterations 
+                              # starting at the pattern pat1
+</pre> 
+to get access to the starting program and some initial patterns to try. 
+The pattern files are text files with a simple format. Emacs them to see 
+their contents. 
+
+<p> Your objective is to modify life.c to create a new program mylife.c that 
+<ul>
+<li> does <em>exactly</em> what it did before. 
+<li> generates output that matches the output of my starting program bit-for-bit. 
+<li> seems to consume as little CPU time as possible according to the time
+command. 
+<li> returns a result in no more than 10 times the wallclock time that my life.c 
+uses for the same computation. 
+</ul> 
+<p> 
+When grading your solution, I will select one pattern file and run 
+your solution on it for a number of iterations that -- for <em>my</em>
+version -- takes approximately 1 CPU-second of cpu time. I will not 
+tell you the contents of this pattern file in advance. Your solution 
+must return an answer in no more than 10 seconds of real (wallclock) 
+time to count. In other words, your algorithm can sleep no more than 9 times
+as much as you compute 
+(If this is not a constraint, you can do arbitrarily well; this limits
+how well you can do).
+Your raw score is the number of CPU-seconds you <em>seem</em> to 
+consume, where lower is better!
+At the end of the assignment, your grade will be based upon 
+<ul> 
+<li> Your raw score. 
+<li> Understandability of your solution, including comments in your
+program about how your strategy works. 
+</ul> 
+ 
+<h3>Constraints</h3> 
+In accomplishing this, you are limited by several constraints: 
+<ul> 
+<li> You can't stop the system clock from ticking or sampling. 
+<li> You cannot control the time at which your process starts executing. 
+<li> You can, however, force your process to sleep and wake up again
+with high accuracy. 
+<li> The point is to make it sleep exactly when the system state is being sampled, and run otherwise! 
+</ul> 
+
+<h3>Strategies</h3> 
+Your basic strategy should be to avoid being running when a clock tick
+of the system accounting clock occurs. In turn, one does this by sleeping
+just before the tick. However, you still have to do useful computation 
+before that. 
+<p> 
+There is an academic paper that describes a successful strategy for 
+solving the assignment. The paper is available <a href='a1/cheating-the-os.pdf'>here (pdf)</a> and in the local file /comp/111/assignments/a1/cheating-the-os.pdf  and a working  C implementation of their algorithm 
+appropriate for use here is available <a href='a1/cheat.c'>here</a> 
+and in the file /comp/111/assignments/a1/cheat.c. 
+
+<h3>Useful system calls</h3> 
+
+There are a few system calls you might want to use to accomplish this. 
+<p> First, it is useful to be able to sleep while accounting is being done! 
+The call <code>nanosleep</code> causes your process to sleep
+for a specified time in <em>nanoseconds</em>. If you can arrange to 
+sleep just before a clock sample, your process will not be counted as running. 
+To use this, do something like the following: 
+<pre> 
+#define _POSIX_C_SOURCE 199309 
+#include &lt;time.h&gt;
+#include &lt;stdio.h&gt; 
+...
+struct timespec request, remainder; 
+int result; 
+request.tv_sec=20; 
+request.tv_nsec=25;
+result=nanosleep(&amp;request, &amp;remainder); 
+</pre> 
+For more information, type
+<pre>
+man nanosleep
+</pre> 
+on <code>linux.cs.tufts.edu.</code> 
+
+<p>Another thing you might want to know is what time it is. 
+You might also want to know how well you're doing. 
+That can be accomplished via code such as the following: 
+<pre> 
+#include &lt;sys/times.h&gt;
+...
+struct tms timebuf; 
+int wallclock = times(&amp;timebuf); 
+fprintf(stderr,"clock ticks of user time since process start are %d\n", 
+        timebuf.tms_utime); 
+fprintf(stderr,"clock ticks since system startup are %d\n", 
+        wallclock); 
+</pre> 
+All times are reported in clock ticks. 
+One clock tick is typically 1/100 of a second. 
+For more information, type 
+<pre> 
+man 2 times
+</pre> 
+on <code>linux.cs.tufts.edu.</code> 
+<p>
+Obviously, to determine a time between two 
+program segments, one subtracts the ending time from the
+starting time. E.g., 
+<pre> 
+wallclock1 = times(&amp;timebuf1); 
+... do something ... 
+wallclock2 = times(&amp;timebuf2); 
+fprintf(stderr, "elapsed wallclock time is %d ticks\n", 
+        wallclock2-wallclock1); 
+</pre> 
+<p> 
+There are higher-resolution clocks available than this on <code>linux.cs.tufts.edu. </code> 
+For details, type: 
+<pre> 
+man 2 clock_getres
+man 2 clock_gettime
+</pre> 
+on <code>linux.cs.tufts.edu.</code>
+
+<p> A third thing you might want to be able to do is to warn yourself
+when a clock tick is coming up.  To do this, you can use the
+<code>setitimer</code> function. This function arranges for you to get
+a signal when a certain time has passed. You can then write a <em>signal 
+handler</em> to do something when the alarm occurs. You can learn more via
+<pre> 
+man setitimer
+</pre> 
+and in class. 
+Warning: <code>setitimer</code> and <code>nanosleep</code> <em>interact 
+and use the same clock!</em> Thus you can only invoke one of them at a time.
+If you want to <code>nanosleep</code>, you should turn off any timers
+that are running beforehand. You can start them up again after the sleep!
+
+<h3> Submitting completed assignments</h3>
+<p> The whole program should be in a single c program <code>mylife.c</code>.
+Programs in other languages are unacceptable.
+To submit this program, first ssh to <code>linux.cs.tufts.edu</code>,
+then type:
+<pre>
+provide comp111 a1 mylife.c
+</pre>
+It will be graded offline. To see grading status or comments, type
+<pre>
+progress comp111
+</pre>
+or check the "Grading" link on the course homepage. 
+
+<h3>Lateness</h3> 
+There will be one point of ten possible points (10%) subtracted per week late or fraction thereof. 
+</body>
+</html>
+
